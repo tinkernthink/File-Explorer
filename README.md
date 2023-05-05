@@ -1,3 +1,5 @@
+![File Explorer Working](file_explorer.gif)
+
 # File Search
 
 A simple file search application with a GUI interface built using Python and Tkinter. This application allows users to search for files and folders on a Windows system based on a given search query.
