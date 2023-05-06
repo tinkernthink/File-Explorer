@@ -1,81 +1,97 @@
 import os
-import string
-import tkinter as tk
-from tkinter import ttk
-import threading
-import queue
+import sqlite3
+import schedule
+import time
+from tkinter import *
 
-class FileSearch:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("File Search")
-        self.root.geometry("800x400")
 
-        self.create_widgets()
+def create_database():
+    conn = sqlite3.connect("file_explorer_cache.db")
+    cursor = conn.cursor()
 
-        # Set up the queue and update the GUI
-        self.update_queue = queue.Queue()
-        self.root.after(100, self.update_files_list)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS file_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            path TEXT NOT NULL UNIQUE
+        )
+    """)
 
-    def create_widgets(self):
-        # Create a frame to hold the search entry and buttons
-        self.search_frame = tk.Frame(self.root)
-        self.search_frame.pack(side=tk.TOP, pady=10)
+    conn.commit()
+    conn.close()
 
-        # Create the search entry
-        self.search_var = tk.StringVar()
-        self.search_entry = ttk.Entry(self.search_frame, textvariable=self.search_var, width=30)
-        self.search_entry.pack(side=tk.LEFT, padx=5)
 
-        # Create the search button
-        self.search_button = tk.Button(self.search_frame, text="Search", command=self.start_search)
-        self.search_button.pack(side=tk.LEFT, padx=5)
+def index_files():
+    conn = sqlite3.connect("file_explorer_cache.db")
+    cursor = conn.cursor()
 
-        # Create the clear button
-        self.clear_button = tk.Button(self.search_frame, text="Clear", command=self.clear_listbox)
-        self.clear_button.pack(side=tk.LEFT, padx=5)
+    for root, _, files in os.walk('C:\\'):
+        for file in files:
+            path = os.path.join(root, file)
+            try:
+                cursor.execute("INSERT INTO file_cache (path) VALUES (?)", (path,))
+            except sqlite3.IntegrityError:
+                pass
 
-        # Create a listbox to show the file names
-        self.files_listbox = tk.Listbox(self.root)
-        self.files_listbox.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+    conn.commit()
+    conn.close()
 
-    def start_search(self):
-        search_thread = threading.Thread(target=self.search_files)
-        search_thread.start()
 
-    def search_files(self):
-        search_query = self.search_var.get().lower()
-        if search_query:
-            for drive in self.get_drives():
-                for root, dirs, files in os.walk(drive):
-                    for file in files:
-                        if search_query in file.lower():
-                            file_path = os.path.join(root, file)
-                            self.update_queue.put(file_path)
-                    for dir in dirs:
-                        if search_query in dir.lower():
-                            dir_path = os.path.join(root, dir)
-                            self.update_queue.put(dir_path)
+def daily_indexing():
+    print("Starting daily indexing...")
+    index_files()
+    print("Daily indexing completed.")
 
-    def update_files_list(self):
-        try:
-            while True:
-                file_path = self.update_queue.get_nowait()
-                self.files_listbox.insert(tk.END, file_path)
-        except queue.Empty:
-            pass
 
-        self.root.after(100, self.update_files_list)
+def search_files(search_query):
+    conn = sqlite3.connect("file_explorer_cache.db")
+    cursor = conn.cursor()
 
-    def clear_listbox(self):
-        self.files_listbox.delete(0, tk.END)
+    cursor.execute("SELECT path FROM file_cache WHERE path LIKE ?", (f"%{search_query}%",))
+    results = cursor.fetchall()
 
-    def get_drives(self):
-        # Get the drive letters on the Windows system
-        drives = [f"{d}:\\" for d in string.ascii_uppercase if os.path.exists(f"{d}:\\")]
-        return drives
+    conn.close()
+    return [result[0] for result in results]
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    FileSearch(root)
-    root.mainloop()
+
+def on_search():
+    search_query = search_var.get()
+    results.delete(1.0, END)
+
+    for file_path in search_files(search_query):
+        results.insert(INSERT, f"{file_path}\n")
+
+
+def on_clear():
+    search_var.set("")
+    results.delete(1.0, END)
+
+
+create_database()
+index_files()
+
+root = Tk()
+root.title("File Explorer")
+
+search_var = StringVar()
+
+search_label = Label(root, text="Search:")
+search_label.pack()
+
+search_entry = Entry(root, textvariable=search_var)
+search_entry.pack()
+
+search_button = Button(root, text="Search", command=on_search)
+search_button.pack()
+
+clear_button = Button(root, text="Clear", command=on_clear)
+clear_button.pack()
+
+results = Text(root, wrap=WORD)
+results.pack(expand=YES, fill=BOTH)
+
+schedule.every().day.at("02:00").do(daily_indexing)
+
+while True:
+    schedule.run_pending()
+    root.update()
+    time.sleep(1)
