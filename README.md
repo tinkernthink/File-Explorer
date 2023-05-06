@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 ![File Explorer Working](file_explorer.gif)
 
 # File Search
@@ -63,7 +63,4 @@ When running the script, a database cache file named `file_explorer_cache.db` wi
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/master
