@@ -4,7 +4,6 @@
 # File Search
 =======
 # File Explorer
->>>>>>> origin/master
 
 A simple file search application with a GUI interface built using Python and Tkinter. This application allows users to search for files and folders on a Windows system based on a given search query.
 
@@ -38,10 +37,9 @@ A simple file search application with a GUI interface built using Python and Tki
 
 ## Usage
 
-<<<<<<< HEAD
+
 To run the File Search application, execute the following command: ```python file_explorer.py```
 
-=======
 To run the File Explorer application, execute the following command: `python file_explorer.py`
 
 ## Commit Message
@@ -58,7 +56,7 @@ Please review the changes and make any necessary modifications.
 ## Cache File
 
 When running the script, a database cache file named `file_explorer_cache.db` will be generated. Please note that this cache file is specific to your local machine and can interfere with the indexing process if transferred to another system. It is recommended not to include this file in the Git repository.
->>>>>>> origin/master
+
 
 ## License
 
