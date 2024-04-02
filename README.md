@@ -51,8 +51,6 @@ To run the File Explorer application, execute the following command: `python fil
   - Include usage instructions and dependencies
   - Update license information
 
-Please review the changes and make any necessary modifications.
-
 ## Cache File
 
 When running the script, a database cache file named `file_explorer_cache.db` will be generated. Please note that this cache file is specific to your local machine and can interfere with the indexing process if transferred to another system. It is recommended not to include this file in the Git repository.
